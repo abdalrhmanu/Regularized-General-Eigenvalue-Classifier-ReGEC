@@ -44,6 +44,15 @@ colnames(data) <- c(
 head(data)
 
 
+# Implementing Gaussian kernel function as mentioned in the paper by assuming 
+# that x and y are scalar values  
+# expressed in latex as follows: e{-((\left \| x - y \right \|)^{2}/\sigma )}
+
+gaussian_kernel <- function(x, y, sigma) {
+  return(exp(-((norm(x - y))^2 / sigma)))
+}
+
+
 # train function
 train <- function(args) {
   return(0)
