@@ -57,9 +57,12 @@ train_RGEC_classifier <- function(data) {
   train_index <- createDataPartition(data$target, p = 0.9, list = FALSE)
   train_data <- data[train_index,]
   test_data <- data[-train_index,]
-
+  
+  colnames(train_data)
+  colnames(test_data)
+  
   # LDA Feature Extraction
-  lda <- feature_extraction(target=data$target, train_data, test_data)
+  lda <- feature_extraction(target=train_data$target, train_data, test_data)
   
   lda_train_features = lda$train_lda.x
   lda_test_features = lda$test_lda.x
@@ -79,7 +82,7 @@ train_RGEC_classifier <- function(data) {
   
   # Compute the generalized eigenvectors and eigenvalues
   eigen <- eigen(solve(train_within_class) %*% train_between_class)
-
+  
   # Sort the eigenvalues in descending order
   eigen_order <- order(eigen$values, decreasing = TRUE)
   eigen$values <- eigen$values[eigen_order]
@@ -93,10 +96,13 @@ train_RGEC_classifier <- function(data) {
   projected_train_data <- as.matrix(lda_train_features) %*% projection_matrix
   projected_test_data <- as.matrix(lda_test_features) %*% projection_matrix
   
+  dim(projected_train_data)
+  colnames(train_data)
+  
   # Train SVM model on the projected training data using both kernels 
   # (linear and gaussian)
-  svm_model <- svm(train_data$target ~., data = data.frame(projected_train_data), kernel="linear", cost=1)
-
+  svm_model <- svm(x = projected_train_data, y = train_data$target, kernel="linear", cost=1)
+  
   # Obtain the predictions 
   predictions <- predict_RGEC_classifier(svm_model, projected_test_data)
   
@@ -106,4 +112,6 @@ train_RGEC_classifier <- function(data) {
 }
 
 predictions = train_RGEC_classifier(data)
+
+predictions
 
