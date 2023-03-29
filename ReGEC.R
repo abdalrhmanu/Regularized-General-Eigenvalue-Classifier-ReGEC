@@ -1,4 +1,4 @@
-# ReGEC Classifier Updated
+# Regularized General Eigenvalue Classifier (ReGEC) Classifier
 
 # Load the required packages
 # install.packages("e1071", dep = TRUE) 
@@ -7,28 +7,52 @@ library(MASS)
 library(caret)
 library(e1071)
 
-# Load the Cleveland Heart Disease dataset
-url <- "https://archive.ics.uci.edu/ml/machine-learning-databases/heart-disease/processed.cleveland.data"
-data <- read.csv(url, header = FALSE, na.strings = "?")
+# Function to handle data loading and pre-processing 
+data_processing <- function(dataset_name) {
+  switch(dataset_name, 
+       cleveland={
+         print("Load the Cleveland Heart Disease dataset")
+         url <- "https://archive.ics.uci.edu/ml/machine-learning-databases/heart-disease/processed.cleveland.data"
+         data <- read.csv(url, header = FALSE, na.strings = "?")
+         
+         # Checking how many rows is the dataset = 303
+         print(paste("Number of Cleveland Heart Disease dataset rows is ", str(nrow(data))))
+         
+         # Assign column names to the dataset
+         colnames(data) <- c("age", "sex", "cp", "trestbps", "chol", "fbs", "restecg", 
+                             "thalach", "exang", "oldpeak", "slope", "ca", "thal", "target")
+         
+         # There are some rows of data that contain Na, based on the observation
+         # we can drop them from the dataset
+         data <- data[!(is.na(data$ca) | is.na(data$thal)),]
+         print(paste("Number of rows remaining in ", dataset_name, " is ", str(nrow(data)))) #303 - 6 = 297 rows remaining
+         
+         
+         # Convert the target variable to a factor
+         data$target <- factor(ifelse(data$target == 0, "negative", "positive"))
+         
+         return(data)
+       },
+       breast_cancer={
+         print("Load Breast Cancer Dataset")
+         url <- "https://archive.ics.uci.edu/ml/machine-learning-databases/breast-cancer/breast-cancer.data"
+         data <- read.csv(url, header = FALSE)
+         
+         # Checking how many rows is the dataset
+         print(paste("Number of Breast Cancer Dataset rows is ", str(nrow(data))))
+         
+         # Assign column names to the dataset
+         colnames(data) <- c("class", "age", "menopause", "tumor-size", "inv-nodes", "node-caps", "deg-malig", 
+                             "breast", "breast-quad", "target")
+                  
+         data$target <- factor(ifelse(data$target == "no", "negative", "positive"))
+         
+         return(data)
+       }
+  )
+}
 
-# Checking how many rows is the dataset = 303
-nrow(data)
-
-# Assign column names to the dataset
-colnames(data) <- c("age", "sex", "cp", "trestbps", "chol", "fbs", "restecg", 
-                    "thalach", "exang", "oldpeak", "slope", "ca", "thal", "target")
-
-# There are some rows of data that contain Na, based on the observation
-# we can drop them from the dataset
-data <- data[!(is.na(data$ca) | is.na(data$thal)),]
-nrow(data) #303 - 6 = 297 rows remaining
-
-
-# Convert the target variable to a factor
-data$target <- factor(ifelse(data$target == 0, "negative", "positive"))
-
-
-# Feature Extraction using LDA approach
+# Feature extraction using LDA approach
 feature_extraction <- function(target, train_data, test_data) {
   # Fit an LDA model to the training data
   lda.fit <- lda(target ~ ., data= train_data)
@@ -40,7 +64,7 @@ feature_extraction <- function(target, train_data, test_data) {
   return(c(train_lda=train_lda, test_lda=test_lda))
 }
 
-
+# Predict function using RGEC classifier 
 predict_RGEC_classifier <- function(model, projected_test_data) {
   # Make predictions on the projected data
   predictions <- predict(model, newdata = as.data.frame(projected_test_data))
@@ -49,18 +73,19 @@ predict_RGEC_classifier <- function(model, projected_test_data) {
   return(predictions)
 }
 
-
-train_RGEC_classifier <- function(data) {
+# Training RGEC Classifier function
+train_RGEC_classifier <- function(data, kernel_type, dataset_name, lamda, gamma, train_size) {
+  # Process the dataset
+  data <- data_processing(dataset_name)
   
-  # Train/test splitting the dataset to 90/10 
+  data
+  
+  # Train/test splitting the dataset
   set.seed(123)
-  train_index <- createDataPartition(data$target, p = 0.9, list = FALSE)
+  train_index <- sample(1:nrow(data), nrow(data) * train_size)
   train_data <- data[train_index,]
   test_data <- data[-train_index,]
-  
-  colnames(train_data)
-  colnames(test_data)
-  
+
   # LDA Feature Extraction
   lda <- feature_extraction(target=train_data$target, train_data, test_data)
   
@@ -68,7 +93,7 @@ train_RGEC_classifier <- function(data) {
   lda_test_features = lda$test_lda.x
   
   # Defining the regularization parameter to help prevent over-fitting.
-  regularization_parameter <- 0.1
+  regularization_parameter <- lamda
   
   # Compute the overall mean and variance for train features
   train_mean <- colMeans(lda_train_features)
@@ -96,22 +121,51 @@ train_RGEC_classifier <- function(data) {
   projected_train_data <- as.matrix(lda_train_features) %*% projection_matrix
   projected_test_data <- as.matrix(lda_test_features) %*% projection_matrix
   
-  dim(projected_train_data)
-  colnames(train_data)
-  
   # Train SVM model on the projected training data using both kernels 
   # (linear and gaussian)
-  svm_model <- svm(x = projected_train_data, y = train_data$target, kernel="linear", cost=1)
+  if(kernel_type == 'linear'){
+    print("Using SVM linear kernel type.")
+    start_time <- Sys.time()
+    
+    svm_model <- svm(x = projected_train_data, y = train_data$target, 
+                     kernel=kernel_type, cost=1)
+    
+    end_time <- Sys.time()
+  }else{
+    print("Using SVM gaussian kernel type.")
+    start_time <- Sys.time()
+    
+    svm_model <- svm(x = projected_train_data, y = train_data$target, 
+                     kernel=kernel_type, gamma=gamma)
+    
+    end_time <- Sys.time()
+  }
   
   # Obtain the predictions 
   predictions <- predict_RGEC_classifier(svm_model, projected_test_data)
   
-  confusionMatrix(table(predictions, test_data$target))
+  # Obtain the confusion matrix to evaluate the model performance
+  cm <- confusionMatrix(table(predictions, test_data$target))
+  print(cm)
   
-  return(predictions)
+  # Obtain the elapsed time in seconds
+  elapsed_time <- end_time - start_time
+  print(elapsed_time)
 }
 
-predictions = train_RGEC_classifier(data)
+# Call the training function and demonstrate the results
+# train_RGEC_classifier(data,
+#                       kernel_type = 'linear',
+#                       dataset_name= 'cleveland',
+#                       lamda=0.2,
+#                       train_size=0.9,
+#                       gamma=NA)
+# 
+# train_RGEC_classifier(data,
+#                       kernel_type = 'radial',
+#                       dataset_name= 'breast_cancer',
+#                       lamda=0.001,
+#                       train_size=0.7,
+#                       gamma=50)
 
-predictions
 
