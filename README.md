@@ -5,10 +5,10 @@ Implementation of Regularized General Eigenvalue Classifier (ReGEC) using R prog
 The classification performance has been evaluated on 4 different datasets and with different kernels and parameters. 
 
 Those datasets are: 
-- Cleveland Heart Disease, 
-- Pima Indiands, 
-- Breast Cancer, 
-- German Datasets. 
+- Cleveland Heart Disease
+- Pima Indiands
+- Breast Cancer 
+- German Datasets 
 
 
 
