@@ -6,7 +6,7 @@ The classification performance has been evaluated on 4 different datasets and wi
 
 Those datasets are: 
 - Cleveland Heart Disease
-- Pima Indiands
+- Pima Indians
 - Breast Cancer 
 - German Datasets 
 
