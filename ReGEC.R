@@ -115,8 +115,6 @@ train_RGEC_classifier <- function(data, kernel_type, dataset_name, lamda, gamma,
   # Process the dataset
   data <- data_processing(dataset_name)
   
-  data
-  
   # Train/test splitting the dataset
   set.seed(123)
   train_index <- sample(1:nrow(data), nrow(data) * train_size)
@@ -191,12 +189,12 @@ train_RGEC_classifier <- function(data, kernel_type, dataset_name, lamda, gamma,
 }
 
 # Running ReGEC classifier on Cleveland Heart Dataset using linear kernel
-# train_RGEC_classifier(data,
-#                       kernel_type = 'linear',
-#                       dataset_name= 'cleveland',
-#                       lamda=0.2,
-#                       train_size=0.9,
-#                       gamma=NA)
+train_RGEC_classifier(data,
+                      kernel_type = 'linear',
+                      dataset_name= 'cleveland',
+                      lamda=0.2,
+                      train_size=0.9,
+                      gamma=NA)
 
 
 # Running ReGEC classifier on Pima Indians Dataset using linear kernel
