@@ -25,7 +25,7 @@ data_processing <- function(dataset_name) {
          # There are some rows of data that contain Na, based on the observation
          # we can drop them from the dataset
          data <- data[!(is.na(data$ca) | is.na(data$thal)),]
-         print(paste("Number of rows remaining in ", dataset_name, " is ", str(nrow(data)))) #303 - 6 = 297 rows remaining
+         print(paste("Number of rows remaining in ", dataset_name, " is ", nrow(data))) #303 - 6 = 297 rows remaining
          
          
          # Convert the target variable to a factor
@@ -39,13 +39,50 @@ data_processing <- function(dataset_name) {
          data <- read.csv(url, header = FALSE)
          
          # Checking how many rows is the dataset
-         print(paste("Number of Breast Cancer Dataset rows is ", str(nrow(data))))
+         print(paste("Number of Breast Cancer Dataset rows is ", nrow(data)))
          
          # Assign column names to the dataset
          colnames(data) <- c("class", "age", "menopause", "tumor-size", "inv-nodes", "node-caps", "deg-malig", 
                              "breast", "breast-quad", "target")
                   
          data$target <- factor(ifelse(data$target == "no", "negative", "positive"))
+         
+         return(data)
+       },
+       pima_indians={
+         print("Load Pima Indians Dataset")
+         url <- "https://query.data.world/s/2wlei2ucaxuvc54ib5yc5erd4acyiw?dws=00000"
+         data <- read.csv(url, header = FALSE)
+         
+         # Checking how many rows is the dataset
+         print(paste("Number of Pima Indians Dataset rows is ", nrow(data)))
+         
+         # Assign column names to the dataset
+         colnames(data) <- c("pregnancy_time", "glucose_concentration", "blood_pressure", 
+                             "skin_fold_thick", "serum_insulin", "body_mass", "diabetes pedigree", 
+                             "age", "target")
+         
+         data$target <- factor(ifelse(data$target == 0, "negative", "positive"))
+         
+         return(data)
+       },
+       german={
+         print("Load German Dataset")
+         url <- "https://archive.ics.uci.edu/ml/machine-learning-databases/statlog/german/german.data"
+         data <- read.csv(url, header = FALSE, sep = " ")
+         
+         # Checking how many rows is the dataset
+         print(paste("Number of German Dataset rows is ", nrow(data)))
+          
+         # Assign column names to the dataset
+         colnames(data) <- c("checking_account_status", "duration_months", "credit_history", "purpose", 
+                                    "credit_amount", "savings_account_status", "employment_status", 
+                                    "installment_rate", "personal_status_sex", "other_debtors", 
+                                    "present_residence", "property", "age", "other_installment_plans", 
+                                    "housing", "number_existing_credits", "job", "dependents", "phone", "foreign_worker", 
+                                    "target")
+         
+         data$target <- factor(ifelse(data$target == 1, "positive", "negative"))
          
          return(data)
        }
@@ -153,19 +190,40 @@ train_RGEC_classifier <- function(data, kernel_type, dataset_name, lamda, gamma,
   print(elapsed_time)
 }
 
-# Call the training function and demonstrate the results
+# Running ReGEC classifier on Cleveland Heart Dataset using linear kernel
 # train_RGEC_classifier(data,
 #                       kernel_type = 'linear',
 #                       dataset_name= 'cleveland',
 #                       lamda=0.2,
 #                       train_size=0.9,
 #                       gamma=NA)
+
+
+# Running ReGEC classifier on Pima Indians Dataset using linear kernel
+# train_RGEC_classifier(data,
+#                       kernel_type = 'linear',
+#                       dataset_name= 'pima_indians',
+#                       lamda=0.2,
+#                       train_size=0.9,
+#                       gamma=NA)
 # 
+
+
+# Running ReGEC classifier on Breast Cancer Dataset using radial gaussian kernel
 # train_RGEC_classifier(data,
 #                       kernel_type = 'radial',
 #                       dataset_name= 'breast_cancer',
 #                       lamda=0.001,
 #                       train_size=0.7,
 #                       gamma=50)
+
+# Running ReGEC classifier on German Dataset using radial gaussian kernel
+# train_RGEC_classifier(data,
+#                       kernel_type = 'radial',
+#                       dataset_name= 'german',
+#                       lamda=0.001,
+#                       train_size=0.7,
+#                       gamma=500)
+
 
 
