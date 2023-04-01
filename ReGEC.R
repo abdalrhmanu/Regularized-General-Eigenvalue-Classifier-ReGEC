@@ -2,14 +2,10 @@
 
 # Load the required packages
 # install.packages("e1071", dep = TRUE) 
-# install.packages("ROCR")
-
 
 library(MASS)
 library(caret)
 library(e1071)
-library(ROCR)
-
 
 # Function to handle data loading and pre-processing 
 data_processing <- function(dataset_name) {
