@@ -2,10 +2,14 @@
 
 # Load the required packages
 # install.packages("e1071", dep = TRUE) 
+# install.packages("ROCR")
+
 
 library(MASS)
 library(caret)
 library(e1071)
+library(ROCR)
+
 
 # Function to handle data loading and pre-processing 
 data_processing <- function(dataset_name) {
@@ -44,7 +48,7 @@ data_processing <- function(dataset_name) {
          # Assign column names to the dataset
          colnames(data) <- c("class", "age", "menopause", "tumor-size", "inv-nodes", "node-caps", "deg-malig", 
                              "breast", "breast-quad", "target")
-                  
+         
          data$target <- factor(ifelse(data$target == "no", "negative", "positive"))
          
          return(data)
@@ -89,7 +93,7 @@ data_processing <- function(dataset_name) {
   )
 }
 
-# Feature extraction using LDA approach
+# Feature extraction using LDA approach - supervised learning approach
 feature_extraction <- function(target, train_data, test_data) {
   # Fit an LDA model to the training data
   lda.fit <- lda(target ~ ., data= train_data)
@@ -115,17 +119,22 @@ train_RGEC_classifier <- function(data, kernel_type, dataset_name, lamda, gamma,
   # Process the dataset
   data <- data_processing(dataset_name)
   
-  # Train/test splitting the dataset
+  # Train/test splitting the dataset based on the train_size
   set.seed(123)
   train_index <- sample(1:nrow(data), nrow(data) * train_size)
   train_data <- data[train_index,]
   test_data <- data[-train_index,]
-
+  
   # LDA Feature Extraction
+  # Best suited for class separation and uses within-class and between-class scatter matrices
+  # Also used for dimensional reduction to help projecting large datasets onto a lower-dimensional space
+  # with having good class-separability 
+  # It also maximizes the component axes for class-separation
   lda <- feature_extraction(target=train_data$target, train_data, test_data)
   
   lda_train_features = lda$train_lda.x
   lda_test_features = lda$test_lda.x
+  
   
   # Defining the regularization parameter to help prevent over-fitting.
   regularization_parameter <- lamda
